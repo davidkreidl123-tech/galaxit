@@ -27,5 +27,13 @@ git push origin HEAD --tags
 
 $zip = "dist\Galaxit-win-x64-v$Version.zip"
 if (-not $Notes) { $Notes = "Galaxit $Version" }
-& $gh release create "v$Version" $zip --title "Galaxit $Version" --notes $Notes
+& $gh release create "v$Version" --title "Galaxit $Version" --notes $Notes
+if ($LASTEXITCODE) { throw 'Release anlegen fehlgeschlagen' }
+# Grosse ZIPs laufen bei GitHub gelegentlich in Timeouts -> bis zu 3 Versuche
+for ($i = 1; $i -le 3; $i++) {
+  & $gh release upload "v$Version" $zip --clobber
+  if (-not $LASTEXITCODE) { break }
+  if ($i -eq 3) { throw "Upload fehlgeschlagen - erneut: gh release upload v$Version $zip --clobber" }
+  Write-Host "Upload-Versuch $i fehlgeschlagen, neuer Versuch..."
+}
 Write-Host "Release v$Version veroeffentlicht."
