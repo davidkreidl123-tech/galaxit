@@ -310,7 +310,7 @@ const io = new IntersectionObserver((entries) => {
     p.near = e.isIntersecting;
     if (p.near) queueRender(p); else unloadPage(p);
   }
-}, { root: $('#viewer'), rootMargin: '900px 0px' });
+}, { root: $('#viewer'), rootMargin: '500px 0px' });
 
 async function buildPages() {
   const host = $('#pages');
@@ -372,7 +372,8 @@ function pump() {
 async function renderPage(p) {
   const zoom = S.zoom;
   const vp = p.page.getViewport({ scale: zoom });
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  // Schärfe bis 2x, aber höchstens ~8 Mio. Pixel pro Seite (≈32 MB statt bis zu 100 MB bei hohem Zoom)
+  const dpr = Math.min(window.devicePixelRatio || 1, 2, Math.sqrt(8e6 / (vp.width * vp.height)));
   const canvas = document.createElement('canvas');
   canvas.className = 'render';
   canvas.width = Math.floor(vp.width * dpr);
@@ -385,8 +386,8 @@ async function renderPage(p) {
     annotationMode: pdfjsLib.AnnotationMode.ENABLE,
   });
   try { await p.task.promise; } catch { return; }
-  if (zoom !== S.zoom || !p.near) return;
-  p.canvas?.remove();
+  if (zoom !== S.zoom || !p.near) { canvas.width = 0; canvas.height = 0; return; }
+  if (p.canvas) { p.canvas.width = 0; p.canvas.height = 0; p.canvas.remove(); }
   p.el.querySelector('.loading')?.remove();
   p.el.prepend(canvas);
   p.canvas = canvas;
@@ -407,7 +408,10 @@ function unloadPage(p) {
   try { p.task?.cancel(); } catch { /* */ }
   renderQueue = renderQueue.filter((q) => q !== p);
   if (!p.canvas) return;
+  // Bitmap sofort freigeben statt auf die Garbage-Collection zu warten
+  p.canvas.width = 0; p.canvas.height = 0;
   p.canvas.remove(); p.canvas = null;
+  try { p.page.cleanup(); } catch { /* läuft gerade noch */ }
   p.textDiv?.remove(); p.textDiv = null;
   p.renderedZoom = 0;
   if (!p.el.querySelector('.loading')) {
@@ -484,9 +488,9 @@ const thumbIo = new IntersectionObserver((entries) => {
     const scale = 130 / p.vp1.width;
     const vp = p.page.getViewport({ scale });
     const c = document.createElement('canvas');
-    c.width = Math.floor(vp.width * 2); c.height = Math.floor(vp.height * 2);
+    c.width = Math.floor(vp.width * 1.5); c.height = Math.floor(vp.height * 1.5);
     c.style.width = `${Math.floor(vp.width)}px`; c.style.height = `${Math.floor(vp.height)}px`;
-    p.page.render({ canvasContext: c.getContext('2d'), viewport: vp, transform: [2, 0, 0, 2, 0, 0] }).promise
+    p.page.render({ canvasContext: c.getContext('2d', { alpha: false }), viewport: vp, transform: [1.5, 0, 0, 1.5, 0, 0] }).promise
       .then(() => el.querySelector('.ph')?.replaceWith(c)).catch(() => {});
   }
 }, { root: $('#thumbs'), rootMargin: '400px 0px' });

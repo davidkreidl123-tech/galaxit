@@ -10,6 +10,9 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 Set-Location $root
 if ($Version -notmatch '^\d+\.\d+\.\d+$') { throw 'Version im Format 1.2.3 angeben' }
+$gh = (Get-Command gh -ErrorAction SilentlyContinue).Source
+if (-not $gh) { $gh = 'C:\Program Files\GitHub CLI\gh.exe' }
+if (-not (Test-Path $gh)) { throw 'GitHub CLI (gh) nicht gefunden' }
 
 $raw = Get-Content package.json -Raw
 $raw = $raw -replace '"version":\s*"[^"]+"', ('"version": "' + $Version + '"')
@@ -18,11 +21,11 @@ $raw = $raw -replace '"version":\s*"[^"]+"', ('"version": "' + $Version + '"')
 & "$PSScriptRoot\build.ps1"
 
 git add -A
-git commit -m "Galaxit $Version" | Out-Null
+git commit -m "Galaxit $Version" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>" | Out-Null
 git tag "v$Version"
 git push origin HEAD --tags
 
 $zip = "dist\Galaxit-win-x64-v$Version.zip"
 if (-not $Notes) { $Notes = "Galaxit $Version" }
-gh release create "v$Version" $zip --title "Galaxit $Version" --notes $Notes
+& $gh release create "v$Version" $zip --title "Galaxit $Version" --notes $Notes
 Write-Host "Release v$Version veroeffentlicht."

@@ -4,6 +4,9 @@ const path = require('path');
 const fs = require('fs');
 const fsp = fs.promises;
 
+// Testläufe (GALAXIT_SCREENSHOT) bekommen ein eigenes Profil, damit sie eine laufende Galaxit-Instanz nicht stören
+if (process.env.GALAXIT_SCREENSHOT) app.setPath('userData', path.join(app.getPath('temp'), 'galaxit-test-profile'));
+
 const USER = app.getPath('userData');
 const BACKUP_DIR = path.join(USER, 'backups');
 const SETTINGS = path.join(USER, 'settings.json');

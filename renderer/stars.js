@@ -5,7 +5,8 @@ let W = 0, H = 0, dpr = 1, stars = [], shooters = [], enabled = true, dim = fals
 const TINTS = ['255,255,255', '200,220,255', '230,200,255', '170,240,255', '255,210,240'];
 
 function resize() {
-  dpr = Math.min(window.devicePixelRatio || 1, 2);
+  // Sterne brauchen keine Retina-Auflösung: 1 Pixel pro CSS-Pixel spart auf HiDPI-Bildschirmen bis zu 85 % GPU-Speicher
+  dpr = 1;
   W = window.innerWidth; H = window.innerHeight;
   canvas.width = W * dpr; canvas.height = H * dpr;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -38,7 +39,7 @@ function drawStatic() {
 
 function frame(t) {
   raf = requestAnimationFrame(frame);
-  if (t - last < 33) return; // ~30 fps reicht und schont die CPU
+  if (t - last < 40) return; // ~25 fps reicht und schont CPU/GPU
   const dt = Math.min(0.1, (t - last) / 1000); last = t;
   ctx.clearRect(0, 0, W, H);
   const speed = [2, 5, 10];
@@ -75,11 +76,15 @@ export function startStars(on = true) {
   setStarsEnabled(on);
 }
 
-export function setStarsEnabled(on) {
+let wanted = true;
+function apply() {
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  enabled = on && !reduce;
+  // Beim Lesen (dim) steht der Himmel still: keine Dauer-Neuzeichnung unter dem Dokument
+  enabled = wanted && !reduce && !dim;
   cancelAnimationFrame(raf);
   if (enabled) raf = requestAnimationFrame(frame); else drawStatic();
 }
 
-export function setStarsDim(v) { dim = v; if (!enabled) drawStatic(); }
+export function setStarsEnabled(on) { wanted = on; apply(); }
+
+export function setStarsDim(v) { dim = v; shooters = []; apply(); }

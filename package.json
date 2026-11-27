@@ -1,7 +1,7 @@
 {
     "name":  "galaxit",
     "productName":  "Galaxit",
-    "version":  "1.0.0",
+    "version": "1.0.1",
     "description":  "Galaxit - PDF-Reader im Weltraum-Look mit Autosave",
     "main":  "main.js",
     "author":  "davidkreidl123-tech",
