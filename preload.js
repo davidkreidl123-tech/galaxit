@@ -1,0 +1,26 @@
+const { contextBridge, ipcRenderer, webUtils } = require('electron');
+
+contextBridge.exposeInMainWorld('galaxit', {
+  getPendingFile: () => ipcRenderer.invoke('get-pending-file'),
+  openDialog: () => ipcRenderer.invoke('open-dialog'),
+  saveDialog: (p) => ipcRenderer.invoke('save-dialog', p),
+  readFile: (p) => ipcRenderer.invoke('read-file', p),
+  writeFile: (p, data) => ipcRenderer.invoke('write-file', p, data),
+  backupFile: (p) => ipcRenderer.invoke('backup-file', p),
+  rescueFile: (p, data) => ipcRenderer.invoke('rescue-file', p, data),
+  loadSettings: () => ipcRenderer.invoke('load-settings'),
+  saveSettings: (s) => ipcRenderer.invoke('save-settings', s),
+  exists: (p) => ipcRenderer.invoke('exists', p),
+  openBackups: () => ipcRenderer.invoke('open-backups'),
+  setTitle: (t) => ipcRenderer.invoke('set-title', t),
+  pathForFile: (file) => webUtils.getPathForFile(file),
+  onOpenPath: (cb) => ipcRenderer.on('open-path', (_e, p) => cb(p)),
+  onBeforeClose: (cb) => ipcRenderer.on('before-close', () => cb()),
+  closeOk: () => ipcRenderer.send('close-ok'),
+  appInfo: () => ipcRenderer.invoke('app-info'),
+  checkUpdate: () => ipcRenderer.invoke('update-check'),
+  downloadUpdate: () => ipcRenderer.invoke('update-download'),
+  installUpdate: () => ipcRenderer.invoke('update-install'),
+  openExternal: (url) => ipcRenderer.invoke('open-external', url),
+  onUpdateStatus: (cb) => ipcRenderer.on('update-status', (_e, s) => cb(s)),
+});

@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; worker-src 'self' blob:; font-src 'self' data:; connect-src 'self' data: blob:">
+  <title>Galaxit</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="stars"></canvas>
+  <div class="nebula"></div>
+
+  <!-- Titelleiste -->
+  <header class="titlebar">
+    <div class="brand">
+      <img src="../assets/logo.svg" alt="" class="brand-logo">
+      <span class="wordmark">GALAXIT</span>
+    </div>
+    <div class="doc-pill" id="docPill" hidden>
+      <span class="doc-name" id="docName"></span>
+    </div>
+    <div class="sync" id="sync" data-state="idle" title="Autosave-Status">
+      <span class="sync-orbit"><span class="sync-dot"></span></span>
+      <span class="sync-text" id="syncText">Bereit</span>
+    </div>
+  </header>
+
+  <!-- Werkzeugleiste -->
+  <nav class="dock" id="dock">
+    <div class="dock-group">
+      <button class="dbtn" data-cmd="open" data-tip="Öffnen  Strg+O"></button>
+      <button class="dbtn" data-cmd="save" data-tip="Jetzt speichern  Strg+S"></button>
+      <button class="dbtn" data-cmd="saveAs" data-tip="Speichern unter…"></button>
+    </div>
+    <div class="dock-sep"></div>
+    <div class="dock-group needs-doc">
+      <button class="dbtn" data-cmd="sidebar" data-tip="Seitenleiste"></button>
+      <button class="dbtn" data-cmd="prev" data-tip="Vorherige Seite"></button>
+      <div class="page-box"><input id="pageInput" value="1" spellcheck="false"><span id="pageCount">/ 0</span></div>
+      <button class="dbtn" data-cmd="next" data-tip="Nächste Seite"></button>
+    </div>
+    <div class="dock-sep"></div>
+    <div class="dock-group needs-doc">
+      <button class="dbtn" data-cmd="zoomOut" data-tip="Verkleinern  Strg −"></button>
+      <button class="zoom-label" id="zoomLabel" data-cmd="fitWidth" data-tip="An Breite anpassen">100%</button>
+      <button class="dbtn" data-cmd="zoomIn" data-tip="Vergrößern  Strg +"></button>
+    </div>
+    <div class="dock-sep"></div>
+    <div class="dock-group tools needs-doc" id="tools">
+      <button class="dbtn tool" data-tool="select" data-tip="Auswählen  V"></button>
+      <button class="dbtn tool" data-tool="highlight" data-tip="Markieren  H"></button>
+      <button class="dbtn tool" data-tool="pen" data-tip="Zeichnen  P"></button>
+      <button class="dbtn tool" data-tool="text" data-tip="Text  T"></button>
+      <button class="dbtn tool" data-tool="note" data-tip="Notiz  N"></button>
+      <button class="dbtn tool" data-tool="eraser" data-tip="Radierer  E"></button>
+    </div>
+    <div class="dock-group swatches needs-doc" id="swatches"></div>
+    <div class="dock-group widths needs-doc" id="widths" hidden>
+      <button class="wbtn" data-width="1.5" data-tip="Fein"><i style="--w:3px"></i></button>
+      <button class="wbtn" data-width="3" data-tip="Mittel"><i style="--w:6px"></i></button>
+      <button class="wbtn" data-width="6" data-tip="Dick"><i style="--w:10px"></i></button>
+    </div>
+    <div class="dock-sep"></div>
+    <div class="dock-group needs-doc">
+      <button class="dbtn" data-cmd="undo" data-tip="Rückgängig  Strg+Z"></button>
+      <button class="dbtn" data-cmd="redo" data-tip="Wiederholen  Strg+Y"></button>
+      <button class="dbtn" data-cmd="search" data-tip="Suchen  Strg+F"></button>
+    </div>
+    <div class="dock-sep"></div>
+    <div class="dock-group">
+      <button class="dbtn" data-cmd="settings" data-tip="Einstellungen"></button>
+    </div>
+  </nav>
+
+  <!-- Suche -->
+  <div class="searchbar glass" id="searchbar" hidden>
+    <span class="ico" data-icon="search"></span>
+    <input id="searchInput" placeholder="Im Dokument suchen…" spellcheck="false">
+    <span class="search-count" id="searchCount"></span>
+    <button class="sbtn" data-cmd="searchPrev" data-tip="Vorheriger  Umschalt+Enter"></button>
+    <button class="sbtn" data-cmd="searchNext" data-tip="Nächster  Enter"></button>
+    <button class="sbtn" data-cmd="searchClose" data-tip="Schließen  Esc"></button>
+  </div>
+
+  <main class="stage">
+    <aside class="sidebar glass" id="sidebar" hidden>
+      <div class="sidebar-head">Seiten</div>
+      <div class="thumbs" id="thumbs"></div>
+    </aside>
+    <section class="viewer" id="viewer" tabindex="0">
+      <div class="pages" id="pages"></div>
+    </section>
+
+    <!-- Startbildschirm -->
+    <section class="welcome" id="welcome">
+      <div class="hero">
+        <div class="hero-orbit">
+          <div class="orbit o1"><i></i></div>
+          <div class="orbit o2"><i></i></div>
+          <div class="orbit o3"><i></i></div>
+          <img src="../assets/logo.svg" alt="Galaxit-Logo" class="hero-logo">
+        </div>
+        <h1 class="hero-title">GALAXIT</h1>
+        <p class="hero-sub">Dein PDF-Universum. Jede Markierung automatisch gesichert.</p>
+        <button class="cta" data-cmd="open"><span class="cta-glow"></span><span class="cta-label">PDF öffnen</span><kbd>Strg O</kbd></button>
+        <p class="hero-hint">oder eine PDF irgendwo ins Fenster ziehen</p>
+      </div>
+      <div class="recent" id="recent" hidden>
+        <div class="recent-head">Zuletzt geöffnet</div>
+        <div class="recent-list" id="recentList"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Notiz-Popover -->
+  <div class="note-pop glass" id="notePop" hidden>
+    <div class="note-pop-head"><span>Notiz</span><button class="sbtn" data-cmd="noteDelete" data-tip="Notiz löschen"></button></div>
+    <textarea id="noteText" placeholder="Gedanken aus dem All…"></textarea>
+    <div class="note-pop-foot"><span class="muted">Strg+Enter = fertig</span><button class="pill-btn" data-cmd="noteDone">Fertig</button></div>
+  </div>
+
+  <!-- Einstellungen -->
+  <div class="modal-backdrop" id="settings" hidden>
+    <div class="modal glass">
+      <div class="modal-head">
+        <img src="../assets/logo.svg" alt="" class="modal-logo">
+        <div><div class="modal-title">Einstellungen</div><div class="muted" id="versionLabel">Galaxit</div></div>
+        <button class="sbtn" data-cmd="settingsClose" data-tip="Schließen"></button>
+      </div>
+      <label class="row">
+        <div><div class="row-title">Autosave</div><div class="muted">Änderungen automatisch in die PDF schreiben</div></div>
+        <span class="switch"><input type="checkbox" id="optAutosave"><i></i></span>
+      </label>
+      <label class="row">
+        <div><div class="row-title">Verzögerung <b id="optDelayLabel"></b></div><div class="muted">Speichern nach der letzten Änderung</div></div>
+        <input type="range" id="optDelay" min="0.5" max="10" step="0.5">
+      </label>
+      <label class="row">
+        <div><div class="row-title">Sicherungskopie</div><div class="muted">Original vor der ersten Änderung sichern</div></div>
+        <span class="switch"><input type="checkbox" id="optBackup"><i></i></span>
+      </label>
+      <label class="row">
+        <div><div class="row-title">Sternenhimmel animieren</div><div class="muted">Bewegter Hintergrund</div></div>
+        <span class="switch"><input type="checkbox" id="optStars"><i></i></span>
+      </label>
+      <div class="row" style="cursor:default">
+        <div><div class="row-title">Updates</div><div class="muted" id="updateState">Prüft automatisch beim Start</div></div>
+        <button class="pill-btn ghost" data-cmd="updateCheck" id="updateCheckBtn">Nach Updates suchen</button>
+      </div>
+      <div class="modal-foot">
+        <button class="pill-btn ghost" data-cmd="openBackups">Backup-Ordner öffnen</button>
+        <button class="pill-btn" data-cmd="settingsClose">Fertig</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Update-Karte -->
+  <div class="update-card glass" id="updateCard" hidden>
+    <div class="update-head">
+      <img src="../assets/logo.svg" alt="" class="update-logo">
+      <div>
+        <div class="update-title" id="updateTitle">Update verfügbar</div>
+        <div class="muted" id="updateSub"></div>
+      </div>
+      <button class="sbtn" data-cmd="updateDismiss" data-tip="Später"></button>
+    </div>
+    <div class="update-notes" id="updateNotes"></div>
+    <div class="update-bar" id="updateBar" hidden><i id="updateFill"></i></div>
+    <div class="update-foot">
+      <button class="pill-btn ghost" data-cmd="updateNotesLink">Was ist neu?</button>
+      <button class="pill-btn" id="updateBtn" data-cmd="updateGo">Jetzt aktualisieren</button>
+    </div>
+  </div>
+
+  <div class="drop-overlay" id="drop" hidden>
+    <div class="drop-ring"><img src="../assets/logo.svg" alt=""><span>Loslassen zum Öffnen</span></div>
+  </div>
+
+  <div class="tooltip" id="tooltip" hidden></div>
+  <div class="toasts" id="toasts"></div>
+
+  <script src="../node_modules/pdf-lib/dist/pdf-lib.min.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

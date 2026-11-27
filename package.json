@@ -1,0 +1,29 @@
+{
+    "name":  "galaxit",
+    "productName":  "Galaxit",
+    "version":  "1.0.0",
+    "description":  "Galaxit - PDF-Reader im Weltraum-Look mit Autosave",
+    "main":  "main.js",
+    "author":  "davidkreidl123-tech",
+    "license":  "MIT",
+    "repository":  "https://github.com/davidkreidl123-tech/galaxit",
+    "galaxit":  {
+                    "repo":  "davidkreidl123-tech/galaxit"
+                },
+    "scripts":  {
+                    "start":  "electron .",
+                    "build":  "powershell -ExecutionPolicy Bypass -File scripts/build.ps1",
+                    "install-app":  "powershell -ExecutionPolicy Bypass -File scripts/install.ps1",
+                    "icon":  "node scripts/build-icon.js"
+                },
+    "dependencies":  {
+                         "electron":  "^33.2.1",
+                         "pdf-lib":  "^1.17.1",
+                         "pdfjs-dist":  "^4.10.38"
+                     },
+    "devDependencies":  {
+                            "png-to-ico":  "^2.1.8",
+                            "rcedit":  "^3.1.0",
+                            "sharp":  "^0.33.5"
+                        }
+}
